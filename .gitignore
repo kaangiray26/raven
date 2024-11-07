@@ -1,0 +1,9 @@
+__pycache__
+env
+temp
+logs
+objects
+config.json
+specter2_base
+*.db
+*.wal

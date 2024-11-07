@@ -1,0 +1,41 @@
+{% extends 'default.html' %}{% block content %}
+<div class="view">
+    <h2>Log</h2>
+    <div class="topic-header">
+        <pre>{{ log }}</pre>
+    </div>
+</div>
+<style>
+    .topic-header {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        padding: 1rem;
+        background-color: #f6f8fa;
+        border: 1px solid var(--border-color);
+        border-radius: 0.375rem;
+    }
+
+    pre{
+        white-space: pre-wrap;
+        word-wrap: break-word;
+    }
+</style>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Add event listener
+        raven.ws.onopen = async ()=>{
+            raven.ws.send(JSON.stringify({
+                type: 'log',
+                id: '{{ id }}'
+            }));
+            setInterval(()=>{
+                raven.ws.send(JSON.stringify({
+                    type: 'log',
+                    id: '{{ id }}'
+                }));
+            }, 1000);
+        }
+    });
+</script>
+{% endblock %}

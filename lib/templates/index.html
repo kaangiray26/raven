@@ -1,0 +1,160 @@
+{% extends 'default.html' %}{% block content %}
+<div class="view">
+    <h1>
+        Accelerating the Process of Systematic Literature Reviews using Large
+        Language Models
+    </h1>
+    <p>
+        This is a simple web application that uses LLM-powered search to
+        accelerate the process of systematic literature reviews. It is designed
+        to help researchers find relevant papers and articles more efficiently.
+    </p>
+    <div class="list-container">
+        <div class="list-header">
+            <p>Find papers...</p>
+            <search>
+                <form onsubmit="research(event)">
+                    <div class="input-field">
+                        <input
+                            type="search"
+                            id="topic"
+                            name="q"
+                            placeholder="Enter a research question..."
+                            autocomplete="off"
+                            onfocus="openTooltip()"
+                            onfocusout="closeTooltip()"
+                            required
+                        />
+                        <div class="tooltip">
+                            <div class="tooltip-arrow"></div>
+                            <div class="tooltip-content">
+                                <div class="tooltip-title">
+                                    <span>Some topics to search for:</span>
+                                </div>
+                                <ul>
+                                    <li>
+                                        <abbr
+                                            title="How are large language models used in medical research?"
+                                            onclick="addQuery('How are large language models used in medical research?')"
+                                            >LLMs in medical research</abbr
+                                        >
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        <button type="submit">Search</button>
+                    </div>
+                </form>
+            </search>
+        </div>
+    </div>
+</div>
+<style>
+    ul {
+        padding-left: 1rem;
+    }
+
+    li {
+    }
+
+    li + li {
+        margin-top: 0.25rem;
+    }
+
+    .input-field {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 0.5rem;
+        position: relative;
+    }
+
+    .tooltip {
+        display: none;
+        width: 100%;
+        position: absolute;
+        margin-top: 0.25rem;
+        top: 100%;
+        left: 0;
+        z-index: 1;
+        transition: opacity 0.2s;
+    }
+
+    .tooltip-arrow {
+        margin: 0 auto;
+        width: 0;
+        height: 0;
+        border-left: 0.5rem solid transparent;
+        border-right: 0.5rem solid transparent;
+        border-bottom: 0.5rem solid var(--border-color);
+    }
+
+    .tooltip-content {
+        padding: 1rem;
+        border-radius: 0.25rem;
+        border: 1px solid var(--border-color);
+        background-color: #fff;
+    }
+
+    abbr {
+        color: black;
+        text-decoration: none;
+        padding: 0.25rem 0.5rem;
+    }
+
+    abbr:hover {
+        cursor: pointer;
+        color: var(--highlight-color);
+        border-bottom: 2px dotted var(--highlight-color);
+    }
+
+    .tooltip-title {
+        display: flex;
+        align-items: center;
+    }
+
+    .tooltip-title .material-symbols-outlined {
+        margin-right: 4px;
+    }
+
+    .list-container {
+        display: grid;
+        grid-template-columns: repeat(1, 1fr);
+        background-color: #fff;
+        border: 1px solid var(--border-color);
+        border-radius: 0.375rem;
+    }
+
+    .list-header {
+        display: grid;
+        gap: 0.5rem;
+        background-color: #f6f8fa;
+        padding: 1rem;
+        border-radius: 0.375rem;
+        font-weight: 700;
+    }
+</style>
+<script>
+    async function openTooltip() {
+        document.querySelector(".tooltip").setAttribute("open", "true");
+    }
+
+    async function closeTooltip() {
+        setTimeout(() => {
+            document.querySelector(".tooltip").removeAttribute("open");
+        }, 100);
+    }
+
+    async function addQuery(topic) {
+        document.querySelector("#topic").value = topic;
+    }
+
+    async function research(ev) {
+        ev.preventDefault();
+
+        // Get the query
+        const query = document.querySelector("#topic").value;
+        if (!query.length) return;
+        raven.research(query);
+    }
+</script>
+{% endblock %}

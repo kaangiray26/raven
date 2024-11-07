@@ -1,0 +1,451 @@
+{% extends 'default.html' %}{% block content %}
+<div class="view">
+    <h2>Papers</h2>
+    <div class="list-container">
+        <div class="list-header">
+            <p>Add a new paper</p>
+            <div class="input-field">
+                <form onsubmit="add_paper(event)">
+                    <input
+                        type="url"
+                        id="paper"
+                        name="paper"
+                        placeholder="https://www.semanticscholar.org/paper/Attention-is-All-you-Need-Vaswani-Shazeer/204e3073870fae3d05bcbc2f6a8e263d9b72e776"
+                        pattern="https://.*"
+                        autocomplete="off"
+                        required
+                    />
+                    <button type="submit">Add</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="list-container">
+        <div class="list-header">
+            <p>
+                Search among {{ count[0] }} papers indexed in the database.
+            </p>
+            <div x-data class="search-field">
+                <form onsubmit="search_papers(event)">
+                    <input
+                        type="text"
+                        id="search"
+                        name="search"
+                        placeholder="How are large language models used for medical research?"
+                        autocomplete="off"
+                        autofocus
+                        required
+                    />
+                    <select id="criterion" name="criterion">
+                        <option value="mixed" selected>Full-text</option>
+                        <option value="title">Title</option>
+                        <option value="abstract">Abstract</option>
+                        <option value="specter2">specter2</option>
+                        <option value="skyrank">SKYRank</option>
+                    </select>
+                    <div class="search-checkbox">
+                        <input type="checkbox" id="sorted" name="sorted" />
+                        <label for="sorted">Sort</label>
+                    </div>
+                    <button x-data :disabled="$store.main.requesting" type="submit" class="search-btn">Search</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="list-container">
+        <div class="results-header">
+            <p>Results</p>
+            <template x-data x-if="$store.main.papers.length">
+                <button @click="generate_answers" :disabled="$store.main.answering">
+                    <span>Generate answers</span>
+                </button>
+            </template>
+        </div>
+        <ul x-data>
+            <template x-if="!$store.main.papers.length">
+                <li>
+                    <p>No papers found.</p>
+                </li>
+            </template>
+            <template x-for="(paper, index) in $store.main.papers">
+                <li>
+                    <div class="paper-index">
+                        <span x-text="index+1"></span>
+                    </div>
+                    <div class="paper-header">
+                        <a :href=`/papers/${btoa(paper.source_url)}`>
+                            <h3 x-text="paper.title"></h3>
+                        </a>
+                    </div>
+                    <div class="paper-badges">
+                        <button title="Citations">
+                            <span class="bi bi-quote"></span>
+                            <span x-text="paper.citation_count"></span>
+                        </button>
+                        <button title="References">
+                            <span class="bi bi-list-ul"></span>
+                            <span x-text="paper.reference_count"></span>
+                        </button>
+                        <button title="Authors">
+                            <span class="bi bi-person"></span>
+                            <span x-text="paper.authors.length"></span>
+                        </button>
+                        <a :href="paper.source_url" target="_blank">
+                            <span class="bi bi-database"></span>
+                            <span x-text="paper.source"></span>
+                        </a>
+                        <button title="Published">
+                            <span class="bi bi-calendar"></span>
+                            <time x-text="raven.format_long_date(paper.published_at)"></time>
+                        </button>
+                        <template x-if="paper.pdf_url">
+                            <a :href="paper.pdf_url" target="_blank">
+                                <span class="bi bi-file-earmark-pdf"></span>
+                                <span>PDF</span>
+                            </a>
+                        </template>
+                        <template x-if="paper.rank_score">
+                            <button :title="paper.rank_score">
+                                <span class="bi bi-graph-up-arrow"></span>
+                                <span>Ranking</span>
+                            </button>
+                        </template>
+                        <template x-for="keyword in paper.keywords">
+                            <a :href=`/papers?q=keywords:${keyword}&criterion=skyrank`>
+                                <span class="bi bi-key"></span>
+                                <span x-text="keyword"></span>
+                            </a>
+                        </template>
+                    </div>
+                    <div class="job-argument">
+                        <small x-text="paper.abstract"></small>
+                    </div>
+                </li>
+            </template>
+        </ul>
+    </div>
+    <template x-data x-if="$store.main.papers.length">
+        <div class="dialog-toolbox">
+            <button title="Download" @click="download_papers">
+                <span>Download as JSON</span>
+            </button>
+        </div>
+    </template>
+    <dialog x-data id="answer-dialog">
+        <div class="dialog-header">
+            <h2>Answer</h2>
+        </div>
+        <div class="dialog-body">
+            <span>Query:</span>
+            <h3 x-text="$store.main.rag.query"></h3>
+        </div>
+        <div class="dialog-body">
+            <p>
+                <template x-for="cited_answer in $store.main.rag.answers">
+                    <div class="dialog-answer" x-data="{context: $store.main.rag.context[cited_answer.citation]}">
+                        <span x-text="cited_answer.answer"></span>
+                        <a class="citation-link" :title="context.title" :href=`/papers/${btoa(context.source_url)}` target="_blank">
+                            <span x-text=`[${cited_answer.citation}]`></span>
+                        </a>
+                    </div>
+                </template>
+            </p>
+        </div>
+        <div class="dialog-footer">
+            <button @click="download_answers">
+                Download as JSON
+            </button>
+            <button @click="close_answer_dialog">
+                Close
+            </button>
+        </div>
+    </dialog>
+</div>
+<style>
+    input[type="checkbox"] {
+        display: none;
+    }
+
+    input[type="checkbox"]+ label{
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: 0.25rem;
+        color: inherit;
+        font-weight: 400;
+        background-color: #fff;
+        user-select: none;
+        cursor: pointer;
+    }
+
+    input[type="checkbox"]+ label:hover{
+        opacity: 0.8;
+    }
+
+    input[type="checkbox"]:checked + label::after {
+        content: "\F633";
+        font-family: bootstrap-icons !important;
+    }
+
+    .search-checkbox{
+        display: contents
+    }
+
+    .search-field{
+        display: grid;
+        grid-template-columns: 1fr auto auto;
+        gap: 0.5rem;
+        position: relative;
+    }
+
+    .input-field {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 0.5rem;
+        position: relative;
+    }
+
+    .search-field button{
+        margin-left: auto;
+    }
+
+    ul {
+        display: flex;
+        flex-direction: column;
+        padding: 0;
+    }
+
+    li{
+        display: flex;
+        flex-direction: column;
+        padding: 0.5rem 1rem;
+        gap: 0.25rem;
+    }
+
+    ul li:first-child {
+        border-top: 1px solid var(--border-color);
+    }
+
+    ul li + li {
+        border-top: 1px solid var(--border-color);
+    }
+
+    .search-btn{
+        justify-self: end;
+        grid-column: 3;
+    }
+
+    .list-container {
+        display: grid;
+        grid-template-columns: repeat(1, 1fr);
+        background-color: #fff;
+        border: 1px solid var(--border-color);
+        border-radius: 0.375rem;
+    }
+
+    .list-header {
+        display: grid;
+        gap: 0.5rem;
+        background-color: #f6f8fa;
+        padding: 1rem;
+        border-radius: 0.375rem;
+        font-weight: 700;
+    }
+
+    .results-header{
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.5rem;
+        background-color: #f6f8fa;
+        padding: 1rem;
+        border-radius: 0.375rem;
+        font-weight: 700;
+    }
+
+    .job-argument{
+        display: flex;
+    }
+
+    .job-time {
+        display: grid;
+        font-size: 0.75rem;
+        color: rgba(0, 0, 0, 0.5);
+    }
+
+    .dialog-header {
+        display: flex;
+    }
+
+    .dialog-body {
+        display: grid;
+        grid-template-columns: repeat(1, 1fr);
+        border: 1px solid var(--border-color);
+        background-color: #f6f8fa;
+        padding: 1rem;
+        border-radius: 0.375rem;
+    }
+
+    .dialog-footer {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: flex-end;
+    }
+
+    .dialog-answer{
+        display: contents;
+    }
+
+    .citation-link {
+        color: #f66151;
+        background-color: unset;
+        vertical-align: super;
+        text-align: center;
+        width: fit-content;
+        display: inline-block;
+        font-size: 0.75rem;
+        font-weight: bold;
+        line-height: 1;
+    }
+
+    .citation-link:hover {
+        text-decoration: underline;
+    }
+</style>
+<script>
+    document.addEventListener("DOMContentLoaded", setup);
+    document.addEventListener("alpine:init", () => {
+        Alpine.store("main", {
+            rag: {},
+            papers: [],
+            answering: false,
+            requesting: false,
+        });
+    });
+
+    async function setup() {
+        // Bind to the onsearchpapers event
+        raven.onsearchpapers = async(data)=>{
+            const store = Alpine.store("main");
+            store.papers = data;
+            store.requesting = false;
+        }
+
+        // Bind to the onanswers event
+        raven.onanswers = async(data)=>{
+            const store = Alpine.store("main");
+            store.rag = data;
+            store.answering = false;
+
+            // Show the dialog
+            const dialog = document.querySelector("#answer-dialog");
+            dialog.showModal();
+        }
+
+        // Bind to the onaddpaper event
+        raven.onaddpaper = async(data)=>{
+            if (data.error){
+                await raven.show_message("Error", data.error);
+            }
+        }
+
+        // Check URL for query
+        const urlParams = new URLSearchParams(window.location.search);
+        if (!urlParams.has('q')) return;
+
+        // Get the query
+        const query = urlParams.get('q');
+        document.querySelector('#search').value = query;
+
+        // Get the criterion
+        const criterion = urlParams.get('criterion') || 'mixed';
+        document.querySelector('#criterion').value = criterion;
+
+        // Search papers
+    }
+
+    async function search_papers(ev){
+        ev.preventDefault();
+
+        const query = document.querySelector('#search').value;
+        if (!query.length) return;
+
+        // Also get the criterion
+        const criterion = document.querySelector('#criterion').value;
+
+        // And, get the sort option
+        const sorted = document.querySelector('#sorted').checked;
+
+        // Add event listener
+        const store = Alpine.store("main");
+        const offset = store.papers.length;
+
+        // Check if we are already requesting
+        if (store.requesting) return;
+        store.requesting = true;
+
+        // Fetch the papers
+        raven.search(query, criterion, sorted);
+    }
+
+    async function generate_answers(){
+        // Add event listener
+        const store = Alpine.store("main");
+        const query = document.querySelector('#search').value;
+        if (!query.length) return;
+
+        // Get paper source_urls for the first 25 papers
+        const paper_source_urls = store.papers.slice(0, 25).map(paper=>paper.source_url);
+        console.log("Using source urls:", paper_source_urls)
+
+        // Check if we are already requesting
+        if (store.answering) return;
+        store.answering = true;
+
+        // Fetch the answers
+        raven.generate_answers(query, paper_source_urls);
+    }
+
+    async function add_paper(ev) {
+        ev.preventDefault();
+
+        // Get the query
+        const query = document.querySelector("#paper").value;
+        if (!query.length) return;
+        raven.add_paper(query);
+    }
+
+    async function download_papers(){
+        const store = Alpine.store("main");
+        const data = JSON.stringify(store.papers, null, 4);
+        const blob = new Blob([data], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'papers.json';
+        a.click();
+        URL.revokeObjectURL(url);
+        a.remove();
+    }
+
+    async function download_answers(){
+        const store = Alpine.store("main");
+        const data = JSON.stringify(store.rag, null, 4);
+        const blob = new Blob([data], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'answers.json';
+        a.click();
+        URL.revokeObjectURL(url);
+        a.remove();
+    }
+
+    async function close_answer_dialog(){
+        const dialog = document.querySelector("#answer-dialog");
+        dialog.close();
+    }
+</script>
+{% endblock %}

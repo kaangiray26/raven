@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   height="500"
+   viewBox="0 -960 60000 20000"
+   width="1500"
+   fill="#e8eaed"
+   version="1.1"
+   id="svg1"
+   sodipodi:docname="raven.svg"
+   inkscape:version="1.4 (e7c3feb100, 2024-10-09)"
+   inkscape:export-filename="raven.png"
+   inkscape:export-xdpi="96"
+   inkscape:export-ydpi="96"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs1" />
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="0.50600222"
+     inkscape:cx="780.62899"
+     inkscape:cy="171.936"
+     inkscape:window-width="1920"
+     inkscape:window-height="1011"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg1" />
+  <rect
+     style="fill:#f66151;fill-opacity:1;stroke-width:721.688"
+     id="rect1"
+     width="60000"
+     height="20000"
+     x="0"
+     y="-960"
+     ry="1425.72" />
+  <g
+     id="g1"
+     transform="translate(-514.78032,-894.28176)">
+    <path
+       d="m 46642.109,13006.281 -844.8,2048.001 -947.2,-384 742.4,-1804.801 q -1356.8,-358.399 -2201.6,-1459.199 -844.8,-1100.8 -844.8,-2496.0004 v -2048 q 0,-844.8 601.6,-1446.4 601.6,-601.6001 1446.4,-601.6001 281.6,0 537.6,96 256,96 512,198.4 l 3046.4,1241.6001 -2048,768 v 768 l 4019.2,2560.0004 h -4019.2 q -422.4,0 -723.2,-300.8 -300.8,-300.8005 -300.8,-723.2004 h -1024 q 0,844.8004 601.6,1446.4004 601.6,601.6 1446.4,601.6 h 5632 l 512,2559.999 h -1024 l -512,-1024 h -2560 v 2048 h -1024 v -2048 z m -2048,-6655.9994 q -217.6,0 -364.8,147.2 -147.2,147.2 -147.2,364.8 0,217.6 147.2,364.8 147.2,147.2 364.8,147.2 217.6,0 364.8,-147.2 147.2,-147.2 147.2,-364.8 0,-217.6 -147.2,-364.8 -147.2,-147.2 -364.8,-147.2 z"
+       id="path1"
+       style="fill:#1f2937;fill-opacity:1;stroke:none;stroke-width:12.8" />
+    <text
+       xml:space="preserve"
+       style="font-weight:bold;font-size:13653.3px;font-family:Cantarell;-inkscape-font-specification:'Cantarell Bold';text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#1f2937;stroke-width:40"
+       x="7260.4141"
+       y="14917.749"
+       id="text1"><tspan
+         sodipodi:role="line"
+         id="tspan1"
+         style="stroke-width:40"
+         x="7260.4141"
+         y="14917.749">raven</tspan></text>
+  </g>
+</svg>

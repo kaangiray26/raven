@@ -1,0 +1,410 @@
+{% extends 'default.html' %}{% block content %}
+<div class="view">
+    <h2>Research</h2>
+    <div class="topic-header">
+        <h3>{{ research.query }}</h3>
+        <div class="topic-time">
+            <label>Last updated:</label>
+            <time>{{ research.updated_at | format_datetime }}</time>
+        </div>
+        <button onclick="raven.update('{{ research.id }}')">Update</button>
+    </div>
+    <div class="list-container">
+        <div class="list-header">
+            <p>Ongoing jobs</p>
+        </div>
+        <ul x-data>
+            <template x-if="!$store.main.running_jobs">
+                <li>
+                    <p>No jobs at the moment.</p>
+                </li>
+            </template>
+            <template x-for="job in $store.main.running_jobs">
+                <li>
+                    <div class="job-header">
+                        <span class="icon" status="Running"></span>
+                        <h3 x-text="job.type"></h3>
+                    </div>
+                    <div class="job-argument">
+                        <small x-text="job.argument"></small>
+                    </div>
+                    <div class="job-time">
+                        <p>Started <time x-text="raven.format_datetime(job.started_at)"></time></p>
+                    </div>
+                    <div class="job-actions">
+                        <template x-if="job.started_at">
+                            <a :href="'/logs/' + job.id">
+                                <span class="bi bi-journal-text"></span>Logs
+                            </a>
+                        </template>
+                    </div>
+                </li>
+            </template>
+        </ul>
+    </div>
+    <div class="list-container">
+        <div class="list-header">
+            <p>Results</p>
+            <div x-data class="buttons">
+                <template x-if="$store.main.papers.length">
+                    <button @click="generate_answers" :disabled="$store.main.answering">
+                        <span>Generate answers</span>
+                    </button>
+                </template>
+                <button @click="search" :disabled="$store.main.button_disabled" :title="$store.main.button_title">Search</button>
+            </div>
+        </div>
+        <ul x-data>
+            <template x-for="paper in $store.main.papers">
+                <li>
+                    <div class="paper-header">
+                        <a :href=`/papers/${btoa(paper.source_url)}`>
+                            <h3 x-text="paper.title"></h3>
+                        </a>
+                    </div>
+                    <div class="paper-badges">
+                        <button title="Citations">
+                            <span class="bi bi-quote"></span>
+                            <span x-text="paper.citation_count"></span>
+                        </button>
+                        <button title="References">
+                            <span class="bi bi-list-ul"></span>
+                            <span x-text="paper.reference_count"></span>
+                        </button>
+                        <button title="Authors">
+                            <span class="bi bi-person"></span>
+                            <span x-text="paper.authors.length"></span>
+                        </button>
+                        <a :href="paper.source_url" target="_blank">
+                            <span class="bi bi-database"></span>
+                            <span x-text="paper.source"></span>
+                        </a>
+                        <button title="Published">
+                            <span class="bi bi-calendar"></span>
+                            <time x-text="raven.format_long_date(paper.published_at)"></time>
+                        </button>
+                        <template x-if="paper.pdf_url">
+                            <a :href="paper.pdf_url" target="_blank">
+                                <span class="bi bi-file-earmark-pdf"></span>
+                                <span>PDF</span>
+                            </a>
+                        </template>
+                        <template x-if="paper.rank_score">
+                            <button :title="paper.rank_score">
+                                <span class="bi bi-graph-up-arrow"></span>
+                                <span>Ranking</span>
+                            </button>
+                        </template>
+                    </div>
+                    <div class="job-argument">
+                        <small x-text="paper.abstract"></small>
+                    </div>
+                </li>
+            </template>
+        </ul>
+    </div>
+    <template x-data x-if="$store.main.papers.length">
+        <div class="dialog-toolbox">
+            <button title="Download" @click="download_papers">
+                <span>Download as JSON</span>
+            </button>
+        </div>
+    </template>
+    <dialog x-data id="answer-dialog">
+        <div class="dialog-header">
+            <h2>Answer</h2>
+        </div>
+        <div class="dialog-body">
+            <span>Query:</span>
+            <h3 x-text="$store.main.rag.query"></h3>
+        </div>
+        <div class="dialog-body">
+            <p>
+                <template x-for="cited_answer in $store.main.rag.answers">
+                    <div class="dialog-answer" x-data="{context: $store.main.rag.context[cited_answer.citation]}">
+                        <span x-text="cited_answer.answer"></span>
+                        <a class="citation-link" :title="context.title" :href=`/papers/${btoa(context.source_url)}` target="_blank">
+                            <span x-text=`[${cited_answer.citation}]`></span>
+                        </a>
+                    </div>
+                </template>
+            </p>
+        </div>
+        <div class="dialog-footer">
+            <button @click="download_answers">
+                Download as JSON
+            </button>
+            <button @click="close_answer_dialog">
+                Close
+            </button>
+        </div>
+    </dialog>
+</div>
+<style>
+    .topic-header {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        padding: 1rem;
+        background-color: #f6f8fa;
+        border: 1px solid var(--border-color);
+        border-radius: 0.375rem;
+    }
+
+    .topic-time {
+        font-size: 0.75rem;
+        color: rgba(0, 0, 0, 0.5);
+    }
+
+    .buttons{
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    ul {
+        display: flex;
+        flex-direction: column;
+        padding: 0;
+    }
+
+    li {
+        display: flex;
+        flex-direction: column;
+        padding: 0.5rem 1rem;
+        gap: 0.25rem;
+    }
+
+    ul li:first-child {
+        border-top: 1px solid var(--border-color);
+    }
+
+    ul li + li {
+        border-top: 1px solid var(--border-color);
+    }
+
+    .list-container {
+        display: grid;
+        grid-template-columns: repeat(1, 1fr);
+        background-color: #fff;
+        border: 1px solid var(--border-color);
+        border-radius: 0.375rem;
+    }
+
+    .list-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: #f6f8fa;
+        padding: 1rem;
+        border-radius: 0.375rem;
+        font-weight: 700;
+    }
+
+    .job-header {
+        display: flex;
+        align-items: center;
+    }
+
+    .job-argument{
+        display: flex;
+    }
+
+    .job-time {
+        font-size: 0.75rem;
+        color: rgba(0, 0, 0, 0.5);
+    }
+
+    .job-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .job-actions a,
+    .job-actions button {
+        color: black;
+        font-weight: 400;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        background-color: #f6f8fa;
+    }
+
+    .job-actions a:hover,
+    .job-actions button:hover {
+        background-color: #e5e9f0;
+    }
+
+    .job-actions a .bi,
+    .job-actions button .bi {
+        margin-right: 0.5rem;
+    }
+
+    .dialog-header {
+        display: flex;
+    }
+
+    .dialog-body {
+        display: grid;
+        grid-template-columns: repeat(1, 1fr);
+        border: 1px solid var(--border-color);
+        background-color: #f6f8fa;
+        padding: 1rem;
+        border-radius: 0.375rem;
+    }
+
+    .dialog-footer {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: flex-end;
+    }
+
+    .dialog-answer{
+        display: contents;
+    }
+
+    .citation-link {
+        color: #f66151;
+        background-color: unset;
+        vertical-align: super;
+        text-align: center;
+        width: fit-content;
+        display: inline-block;
+        font-size: 0.75rem;
+        font-weight: bold;
+        line-height: 1;
+    }
+
+    .citation-link:hover {
+        text-decoration: underline;
+    }
+</style>
+<script>
+    document.addEventListener("DOMContentLoaded", setup);
+    document.addEventListener("alpine:init", () => {
+        Alpine.store("main", {
+            rag: {},
+            papers: [],
+            running_jobs: [],
+            answering: false,
+            requesting: false,
+            button_disabled: false,
+            button_title: "Search papers",
+        });
+    });
+
+    async function setup() {
+        // Bind to the onjobs event
+        raven.onjobs = async(data)=>{
+            const store = Alpine.store("main");
+            // Filter out running jobs
+            store.running_jobs = data.filter(job=>job.started_at && !job.finished_at);
+
+            // Check if we have running jobs
+            if (store.running_jobs.length){
+                store.button_disabled = true;
+                store.button_title = "Waiting for jobs...";
+                return
+            }
+
+            // Fetch papers
+            if(!store.papers.length) search();
+        }
+
+        // Bind to the onsearchpapers event
+        raven.onsearchpapers = async(data)=>{
+            const store = Alpine.store("main");
+            store.papers = data;
+            store.requesting = false;
+            store.button_disabled = false;
+            store.button_title = "Search papers";
+        }
+
+        // Add event listener
+        raven.ws.onopen = async ()=>{
+            raven.ws.send(JSON.stringify({
+                type: 'jobs'
+            }));
+            setInterval(()=>{
+                raven.ws.send(JSON.stringify({
+                    type: 'jobs'
+                }));
+            }, 1000);
+        }
+
+        // Bind to the onanswers event
+        raven.onanswers = async(data)=>{
+            const store = Alpine.store("main");
+            store.rag = data;
+            store.answering = false;
+
+            // Show the dialog
+            const dialog = document.querySelector("#answer-dialog");
+            dialog.showModal();
+        }
+    }
+
+    async function search(){
+        // Add event listener
+        const store = Alpine.store("main");
+        const offset = store.papers.length;
+
+        // Check if we are already requesting
+        if (store.requesting) return;
+
+        // Fetch the papers
+        store.papers = [];
+        store.requesting = true;
+        store.button_disabled = true;
+        store.button_title = "Waiting for papers...";
+
+        // Fetch the papers
+        raven.search("{{ research.query }}", "specter2", false);
+    }
+
+    async function generate_answers(){
+        // Add event listener
+        const store = Alpine.store("main");
+
+        // Get paper source_urls for the first 25 papers
+        const paper_source_urls = store.papers.slice(0, 25).map(paper=>paper.source_url);
+
+        // Check if we are already requesting
+        if (store.answering) return;
+        store.answering = true;
+
+        // Fetch the answers
+        raven.generate_answers("{{ research.query }}", paper_source_urls);
+    }
+
+    async function download_papers(){
+        const store = Alpine.store("main");
+        const data = JSON.stringify(store.papers, null, 4);
+        const blob = new Blob([data], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'papers.json';
+        a.click();
+        URL.revokeObjectURL(url);
+        a.remove();
+    }
+
+    async function download_answers(){
+        const store = Alpine.store("main");
+        const data = JSON.stringify(store.rag, null, 4);
+        const blob = new Blob([data], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'answers.json';
+        a.click();
+        URL.revokeObjectURL(url);
+        a.remove();
+    }
+
+    async function close_answer_dialog(){
+        const dialog = document.querySelector("#answer-dialog");
+        dialog.close();
+    }
+</script>
+{% endblock %}

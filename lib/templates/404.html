@@ -1,0 +1,47 @@
+{% extends 'default.html' %}
+{% block title %}
+Page not found
+{% endblock %}
+{% block content %}
+<div class="view">
+    <div class="notfound">
+        <div class="notfound-grid">
+            <img src="/static/favicon.svg">
+            <div class="notfound-body">
+                <h1>404</h1>
+                <h3>We can't find the page you are looking for.</h3>
+                <p>Was it expected? Good.</p>
+                <p>If not, yikes! Please check the URL and try again.</p>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    .notfound{
+        display: flex;
+        flex-direction: column;
+        padding: 1rem;
+        background-color: #f8f9fa;
+        border: 1px solid var(--border-color);
+        border-radius: 0.375rem;
+    }
+
+    .notfound img{
+        width: 256px;
+        height: auto;
+        aspect-ratio: 1 !important;
+    }
+
+    .notfound-grid{
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .notfound-body{
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+</style>
+{% endblock %}

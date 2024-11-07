@@ -1,0 +1,77 @@
+{% extends 'default.html' %}{% block content %}
+<div class="view">
+    <h2>Terms of Service</h2>
+    <section>
+        <p>Last updated: 2024-10-27</p>
+    </section>
+    <p>
+        By using the services provided by our application, you agree to the
+        following terms:
+    </p>
+    <ol>
+        <li>
+            <p>
+                The software is provided "as is", without warranty of any kind.
+                There is no guarantee that the software will work as intended.
+            </p>
+        </li>
+        <li>
+            <p>
+                Our service allows you to collect and analyze papers from
+                various sources. All data collected and processed by our service
+                is stored locally on your device. You are responsible for the
+                content you collect and analyze.
+            </p>
+        </li>
+        <li>
+            <p>
+                Using the service for illegal purposes is strictly prohibited.
+            </p>
+        </li>
+        <li>
+            <p>
+                Some services may require you to use API keys. We do not provide
+                any API keys. By using the service, you confirm that you give us
+                permission to use your API keys to access the services.
+            </p>
+        </li>
+        <li>
+            <p>
+                We are not responsible for any costs incurred by using the
+                service or any damages caused by the service through the use of
+                third-party services or APIs.
+            </p>
+        </li>
+        <li>
+            <p>
+                We reserve the right to change these terms at any time. You can
+                find the date of the last update at the top of this page.
+            </p>
+        </li>
+    </ol>
+    <h3>Questions</h3>
+    <p>If you have any questions regarding these terms, please contact us at
+        <a href="mailto:kaangiray26@protonmail.com">kaangiray26[at]protonmail.com</a>.
+    </p>
+</div>
+<style>
+    a {
+        color: indigo;
+    }
+
+    a:hover{
+        background-color: unset;
+        text-decoration: underline;
+    }
+
+    section {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: #f6f8fa;
+        padding: 1rem;
+        border-radius: 0.375rem;
+        font-weight: 700;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,44 @@
+// This file contains the configuration for the API keys, limits and models used in the project.
+// Don't forget to get rid of the comments before using this file.
+// Otherwise, it will throw an error, as JSON doesn't support comments but JSONC does.
+{
+    "api_keys": {
+        "openai": ""
+    },
+    "limits": {
+        "crawler": 1000
+    },
+    "chat": {
+        // Options: gpt-4o, gpt-4o-mini, gpt-4-turbo, gpt-4, gpt-3.5-turbo
+        "openai_chat_model": "gpt-4o-mini"
+    },
+    "embeddings": {
+        // Set the dimension to a suitable value for both models
+        "dimensions": 384,
+        // Options: openai, huggingface
+        "prefer": "huggingface",
+        // Options: cpu, cuda
+        "device": "cuda",
+        // Options: text-embedding-3-large, text-embedding-3-small, text-embedding-ada-002
+        "openai_model": "text-embedding-3-large",
+        // Look at https://huggingface.co/spaces/mteb/leaderboard
+        "huggingface_model": "sentence-transformers/all-MiniLM-L6-v2"
+    },
+    // Change the weights according to the requirements
+    "ranking": {
+        // Specifies the number of results to be returned
+        "limit": 250,
+        // Specifies the number of similar keywords to be considered
+        "skyrank_k": 3,
+        // Specifies the threshold for the cosine similarity among keywords
+        "skyrank_c": 0.5,
+        // Weights for the scoring algorithm
+        "weights": {
+            "similarity": 0.5,
+            "recency": 0.25,
+            "citation_score": 0.25,
+            "reference_score": 0,
+            "author_score": 0
+        }
+    }
+}

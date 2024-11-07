@@ -1,0 +1,183 @@
+{% extends 'default.html' %}{% block content %}
+<div class="view">
+    <h2>Usage</h2>
+    <p>Here you can see the costs and summary of your usage.</p>
+    <div x-data x-show="!$store.main.loaded">
+        <p>Calculating...</p>
+    </div>
+    <div x-data class="loader" x-show="$store.main.loaded">
+        <h3>Costs</h3>
+        <div class="usage-header">
+            <table id="costs">
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                        <th>Object</th>
+                        <th>Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <template
+                        x-for="i in Object.keys($store.main.data.costs).length"
+                    >
+                        <tr>
+                            <td>
+                                <template x-if="i==1">
+                                    <b>OpenAI</b>
+                                </template>
+                            </td>
+                            <td
+                                x-text="Object.keys($store.main.data.costs)[i-1]"
+                            ></td>
+                            <td
+                                x-text="Object.values($store.main.data.costs)[i-1]"
+                            ></td>
+                        </tr>
+                    </template>
+                    <tr class="usage-total">
+                        <td></td>
+                        <td>Total</td>
+                        <td x-text="total_usage_cost"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <h3>Summary</h3>
+        <div class="usage-header">
+            <table id="summary">
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                        <th>Object</th>
+                        <th>Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>DuckDB</td>
+                        <td>Papers</td>
+                        <td x-text="$store.main.data.summary.paper_count"></td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td>Topics</td>
+                        <td x-text="$store.main.data.summary.topic_count"></td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td>Keywords</td>
+                        <td
+                            x-text="$store.main.data.summary.keyword_count"
+                        ></td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td>Embeddings</td>
+                        <td x-text="$store.main.data.summary.vector_count"></td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td>Total Job Duration</td>
+                        <td
+                            x-text="`${$store.main.data.summary.total_duration}s`"
+                        ></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<style>
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    thead {
+        border-bottom: 0.125rem solid black;
+        text-align: left;
+    }
+
+    th,
+    td {
+        padding: 0.25rem;
+    }
+
+    tr:hover {
+        cursor: pointer;
+        background-color: #f6f8fa;
+    }
+
+    #summary tbody tr td:nth-child(1) {
+        font-weight: bold;
+    }
+
+    .usage-header {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        padding: 1rem;
+        border: 1px solid var(--border-color);
+        border-radius: 0.375rem;
+    }
+
+    .usage-total td:nth-child(2),
+    .usage-total td:nth-child(3) {
+        font-weight: bold;
+        border-top: 0.125rem solid var(--border-color);
+    }
+
+    .usage-total td:nth-child(2) {
+        text-align: right;
+        padding-right: 1rem;
+    }
+
+    .loader {
+        display: contents;
+    }
+</style>
+<script>
+    document.addEventListener("DOMContentLoaded", setup);
+    document.addEventListener("alpine:init", () => {
+        Alpine.store("main", {
+            data: {
+                costs: {},
+                summary: {},
+            },
+            loaded: false,
+        });
+    });
+
+    async function setup() {
+        // Bind to events
+        raven.ws.onopen = async () => {
+            // Bind to the onsearchpapers event
+            raven.onusage = async (data) => {
+                const store = Alpine.store("main");
+                store.data = data;
+                store.loaded = true;
+            };
+
+            // Request usage data
+            raven.ws.send(
+                JSON.stringify({
+                    type: "usage",
+                }),
+            );
+        };
+    }
+
+    function total_usage_cost() {
+        const store = Alpine.store("main");
+        const costs = store.data.costs;
+
+        // Sum the costs
+        return (
+            "$" +
+            Object.values(costs)
+                .reduce((a, b) => a + parseFloat(b.slice(1)), 0)
+                .toFixed(8)
+        );
+    }
+</script>
+{% endblock %}

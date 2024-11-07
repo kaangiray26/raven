@@ -1,0 +1,209 @@
+{% extends 'default.html' %}{% block content %}
+<div class="view">
+    <h2>Jobs</h2>
+    <div class="list-container">
+        <div class="list-header">
+            <p>Ongoing jobs</p>
+        </div>
+        <ul x-data>
+            <template x-if="!$store.jobs.total_count">
+                <li>
+                    <p>No jobs at the moment.</p>
+                </li>
+            </template>
+            <template x-for="job in $store.jobs.running">
+                <li>
+                    <div class="job-header">
+                        <span class="icon" status="Running"></span>
+                        <h3 x-text="job.type"></h3>
+                    </div>
+                    <div class="job-argument">
+                        <small x-text="job.argument"></small>
+                    </div>
+                    <div class="job-time">
+                        <p>Started <time x-text="raven.format_datetime(job.started_at)"></time></p>
+                    </div>
+                    <div class="job-actions">
+                        <template x-if="job.started_at">
+                            <a :href="'/logs/' + job.id" target="_top">
+                                <span class="bi bi-journal-text"></span>Logs
+                            </a>
+                        </template>
+                    </div>
+                </li>
+            </template>
+            <template x-for="job in $store.jobs.non_running">
+                <li>
+                    <div class="job-header">
+                        <span class="icon" status="None"></span>
+                        <h3 x-text="job.type"></h3>
+                    </div>
+                    <div class="job-argument">
+                        <small x-text="job.argument"></small>
+                    </div>
+                    <div class="job-time">
+                        <p>Created <time x-text="raven.format_datetime(job.created_at)"></time></p>
+                    </div>
+                </li>
+            </template>
+            <template x-for="job in $store.jobs.finished">
+                <li>
+                    <div class="job-header">
+                        <span class="icon" :status="job.success ? 'true' : 'false'"></span>
+                        <h3 x-text="job.type"></h3>
+                    </div>
+                    <div class="job-argument">
+                        <small x-text="job.argument"></small>
+                    </div>
+                    <div class="job-time">
+                        <p>Finished in <time x-text="raven.format_datetimedelta(job.started_at, job.finished_at)"></time></p>
+                    </div>
+                    <div class="job-actions">
+                        <template x-if="job.started_at">
+                            <a :href="'/logs/' + job.id">
+                                <span class="bi bi-journal-text"></span>Logs
+                            </a>
+                        </template>
+                    </div>
+                </li>
+            </template>
+        </ul>
+    </div>
+</div>
+<style>
+    ul {
+        display: flex;
+        flex-direction: column;
+        padding: 0;
+    }
+
+    li {
+        display: flex;
+        flex-direction: column;
+        padding: 0.5rem 1rem;
+        gap: 0.25rem;
+    }
+
+    ul li:first-child {
+        border-top: 1px solid var(--border-color);
+    }
+
+    ul li ~ li {
+        border-top: 1px solid var(--border-color);
+    }
+
+    .list-container {
+        display: grid;
+        grid-template-columns: repeat(1, 1fr);
+        background-color: #fff;
+        border: 1px solid var(--border-color);
+        border-radius: 0.375rem;
+    }
+
+    .list-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: #f6f8fa;
+        padding: 1rem;
+        border-radius: 0.375rem;
+        font-weight: 700;
+    }
+
+    .job-header {
+        display: flex;
+        align-items: center;
+    }
+
+    .job-argument{
+        display: flex;
+    }
+
+    .job-time {
+        font-size: 0.75rem;
+        color: rgba(0, 0, 0, 0.5);
+    }
+
+    .job-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .job-actions a,
+    .job-actions button {
+        color: black;
+        font-weight: 400;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        background-color: #f6f8fa;
+    }
+
+    .job-actions a:hover,
+    .job-actions button:hover {
+        background-color: #e5e9f0;
+    }
+
+    .job-actions a .bi,
+    .job-actions button .bi {
+        margin-right: 0.5rem;
+    }
+</style>
+<script>
+    document.addEventListener("DOMContentLoaded", setup);
+    document.addEventListener("alpine:init", () => {
+        Alpine.store("jobs", {
+            running: [],
+            non_running: [],
+            finished: [],
+            total_count: 0
+        })
+    });
+
+    async function setup(){
+        // Bind to the onjobs event
+        raven.onjobs = async(data)=>{
+            const store = Alpine.store("jobs");
+            store.total_count = data.length;
+
+            // Clear the store
+            let running = [];
+            let non_running = [];
+            let finished = [];
+
+            // Filter at once
+            for (const job of data) {
+                // Running jobs
+                if(job.started_at && job.finished_at == null){
+                    running.push(job);
+                    continue
+                }
+                // Finished jobs
+                if(job.finished_at != null){
+                    finished.push(job);
+                    continue
+                }
+                // Non-running jobs
+                non_running.unshift(job);
+            }
+
+            // Update the store
+            store.running = running;
+            store.non_running = non_running;
+            store.finished = finished;
+        }
+
+        // Add event listener
+        raven.ws.onopen = async ()=>{
+            raven.ws.send(JSON.stringify({
+                type: 'jobs'
+            }));
+            setInterval(()=>{
+                raven.ws.send(JSON.stringify({
+                    type: 'jobs'
+                }));
+            }, 1000);
+        }
+    }
+</script>
+{% endblock %}
